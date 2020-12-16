@@ -43,7 +43,6 @@ const server = setupServer(
 // 🐨 before all the tests, start the server with `server.listen()`
 // 🐨 after all the tests, stop the server with `server.close()`
 beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers()) // reset server handlers after each test to avoid one time server test cases from overriding general server handler setup
 afterAll(() => server.close())
 
 test(`logging in displays the user's username`, async () => {
@@ -77,18 +76,6 @@ test('missing password should display error message ', async () => {
   // 🐨 uncomment this and you'll start making the request!
   userEvent.click(screen.getByRole('button', {name: /submit/i}))
   await waitForElementToBeRemoved(() => screen.getByLabelText('loading...'))
-  expect(screen.getByRole('alert')).toHaveTextContent(/password required/i)
-})
-
-test('missing password should display error message (snapshop)', async () => {
-  render(<Login />)
-  const {username, password} = buildLoginForm()
-
-  userEvent.type(screen.getByLabelText(/username/i), username)
-
-  // 🐨 uncomment this and you'll start making the request!
-  userEvent.click(screen.getByRole('button', {name: /submit/i}))
-  await waitForElementToBeRemoved(() => screen.getByLabelText('loading...'))
   expect(screen.getByRole('alert')).toMatchInlineSnapshot(`
     <div
       role="alert"
@@ -97,29 +84,4 @@ test('missing password should display error message (snapshop)', async () => {
       password required
     </div>
   `)
-})
-
-test('unknown server error displays the error message', async () => {
-  const testErrorMessage = "Server response 500, something is wrong. Try again later" // to communicate that the error message is intentionally going to be the same below
-
-  // one off test case
-  server.use(
-    rest.post(
-      'https://auth-provider.example.com/api/login',
-      async (req, res, ctx) => {
-        return res(
-          ctx.status(500),
-          ctx.json({
-            message: testErrorMessage,
-          }),
-        )
-      },
-    ),
-  )
-  render(<Login />)
-
-  // 🐨 uncomment this and you'll start making the request!
-  userEvent.click(screen.getByRole('button', {name: /submit/i}))
-  await waitForElementToBeRemoved(() => screen.getByLabelText('loading...'))
-  expect(screen.getByRole('alert')).toHaveTextContent(testErrorMessage)
 })
